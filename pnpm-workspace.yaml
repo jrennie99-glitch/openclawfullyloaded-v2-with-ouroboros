@@ -8,6 +8,8 @@ packages:
   - paperclip/ui
   - paperclip/cli
   - paperclip/packages/*
+  - paperclip/packages/adapters/*
+  - paperclip/packages/plugins/*
 
 onlyBuiltDependencies:
   - "@lydell/node-pty"
