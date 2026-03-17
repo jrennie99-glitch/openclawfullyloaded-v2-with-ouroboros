@@ -215,6 +215,9 @@
     "./cli-entry": "./openclaw.mjs"
   },
   "scripts": {
+    "start-all": "./start-all.sh",
+    "paperclip": "cd paperclip && pnpm dev",
+    "paperclip:build": "cd paperclip && pnpm build",
     "android:assemble": "cd apps/android && ./gradlew :app:assembleDebug",
     "android:bundle:release": "bun apps/android/scripts/build-release-aab.ts",
     "android:format": "cd apps/android && ./gradlew :app:ktlintFormat :benchmark:ktlintFormat",

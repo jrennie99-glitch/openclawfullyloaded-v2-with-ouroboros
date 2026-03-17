@@ -1,0 +1,49 @@
+You are an expert full-stack developer specializing in AI agents like OpenClaw (formerly Clawdbot/Moltbot). My current project is an OpenClaw instance. DO NOT MODIFY, DELETE, OR OVERWRITE ANY EXISTING CORE FILES (like src/, config/, skills core, package.json scripts, etc.). ONLY ADD new folders, new files, new modules, new skills, extensions, and integrations in additive ways (use folders like /upgrades, /godmode, /frontend, /skills-extra, /extensions).
+
+Goal: Upgrade to "Super Supreme Ultra God Mode OpenClaw" with EVERY possible feature I can think of, full parity/superior to ChatGPT + Grok + Claude + Gemini + Perplexity combined, plus extras. Make it the most capable, secure, anti-hallucinating, multimodal personal AI agent ever.
+
+Key requirements — implement ALL of these additively:
+
+1. Modern Action Control Center UI (do NOT replace chat; ADD a separate web dashboard):
+   - Create a new /frontend folder with Vite + React + Tailwind + shadcn/ui (auto-install deps).
+   - Build a clean, dark-mode-first "Action Control Center" dashboard inspired by advanced tools like Grok interface / Notion / Linear / modern control panels.
+   - Features: real-time task/log viewer (WebSocket to backend), quick action buttons (e.g. "Live Camera", "Analyze Upload", "Web Search Now", "Generate Image", "Run Code"), agent status/health monitor, personality toggle (Grok-fun vs ChatGPT-neutral vs Claude-careful), sidebar with recent conversations, memory/context viewer, security audit log.
+   - Expose backend API endpoints (new Express routes in a new /upgrades/api.js or similar) so frontend talks to agent without touching core.
+   - Make UI beautiful, responsive, mobile-friendly, with animations and loading states.
+
+2. Supreme security & anti-hallucination layer (god-tier):
+   - ADD mandatory user confirmation step (via chat or dashboard) for ALL high-risk actions: shell exec, file write/delete, email send, money-related, API keys, etc.
+   - ADD reflection/self-critique loop: before final answer/action, agent MUST run internal "critique & verify" step (use chain-of-verification, double-check facts, cite sources).
+   - ADD sandboxed tool execution where possible (e.g. limit fs access to specific folders).
+   - ADD encrypted storage for all secrets/context (use better-key or similar).
+   - ADD audit logging of every tool call + decision.
+   - ADD rate limiting, input sanitization, prompt injection guards.
+   - Force agent to use step-by-step reasoning + tool calls only when needed + admit uncertainty.
+
+3. Multimodal + vision/camera/live features:
+   - Support file uploads (images, videos, PDFs, docs) → analyze with vision models (Claude-3.5-sonnet, GPT-4o, or local LLaVA via Ollama if setup).
+   - ADD new skill: "vision_analyzer" that takes base64 or file path → describes, OCR, object detection, captioning.
+   - ADD live camera mode: In the new frontend, add page/button "Live Vision" → use browser getUserMedia() to access webcam, capture frames every few seconds, stream/send to backend for real-time analysis (object recognition, "what do you see?", describe scene, read text).
+   - Display results in UI with bounding boxes/overlays if possible (use simple canvas or library).
+   - Support video upload → frame sampling + analysis.
+
+4. Full ChatGPT + Grok + extras feature parity & beyond:
+   - Web search + real-time knowledge: ADD Tavily/SerpAPI/DuckDuckGo search skill (or browser tool if already exists).
+   - Image generation: ADD Flux.1 / DALL·E 3 / Stable Diffusion integration (via API keys).
+   - Advanced reasoning: ADD o1-style chain-of-thought, tree-of-thoughts, self-ask.
+   - Code interpreter: Sandboxed Node/Python execution (use existing or add safe-eval like).
+   - Personality modes: Toggle "Grok mode" (max truth, witty, no censorship), "ChatGPT mode" (helpful, safe), "Ultra mode" (combine best + proactive).
+   - Memory & long context: Enhance with vector DB (add Pinecone/Chroma if possible) or simple file-based.
+   - Proactive: ADD background jobs (cron-like) for reminders, email watch, news digest.
+   - Voice: If possible, ADD speech-to-text/text-to-speech (browser or API).
+   - Everything else: calendar manage, email send/reply, browser control, file ops, GitHub integration, etc. — extend existing or add wrappers.
+
+5. Implementation instructions:
+   - Use strongest models by default (Claude 3.5/Opus, GPT-4o, Grok via xAI API if key provided).
+   - Add config options in a new /godmode/config.json for API keys, toggles, risk levels.
+   - Make agent detect user intent and switch modes/tools automatically when best.
+   - Add /upgrades/godmode-entry.js that monkey-patches or wraps main agent loop to inject security/reflection without core changes.
+   - After adding, output: "Setup complete. Run: pnpm dev:frontend" or similar for UI, and how to access dashboard (e.g. http://localhost:5173).
+   - Test everything step-by-step and fix errors.
+
+Start NOW: Create all new folders/files, install necessary deps (vite, react, tailwind, shadcn, socket.io, etc.), write code for UI + backend extensions + new skills. Be extremely detailed, production-quality code. Do it in phases if needed but aim for full god-mode in this pass. Go!

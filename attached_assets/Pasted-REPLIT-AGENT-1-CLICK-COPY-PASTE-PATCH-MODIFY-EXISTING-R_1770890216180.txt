@@ -1,0 +1,566 @@
+REPLIT AGENT — 1-CLICK COPY/PASTE PATCH (MODIFY EXISTING REPO, DO NOT BREAK ANYTHING)
+
+GOAL
+Upgrade the existing chat input/composer UI to a modern ChatGPT/Grok-style “Supreme” composer with:
+- Modern mic button (not cheesy), inside the input pill, right next to the text box
+- Modern speaker toggle (read assistant replies aloud), also inside the pill
+- Keep existing chat send behavior 100% unchanged
+- Feature-flagged: default OFF in production
+- HTTPS requirement note only (don’t block build)
+- No backend required (use browser SpeechRecognition + SpeechSynthesis)
+- Do NOT remove any routes or existing features. Additive changes only.
+
+NON-NEGOTIABLE
+1) Do NOT remove/rename existing routes, APIs, components, or message logic.
+2) All new functionality behind feature flags with defaults OFF.
+3) Incremental commits (at least 2): UI component + wiring; styling + integration.
+4) Log errors safely (no secrets). If no logger exists, use console.warn minimally.
+5) Rollback-friendly (purely additive; if flag is off, existing composer renders as-is).
+
+FEATURE FLAGS (ENV)
+- SUPREME_VOICE_UI=0   (default OFF)
+- SUPREME_TTS_DEFAULT=0 (default OFF)
+- SUPREME_MIC_MODE=toggle (toggle|push) default "toggle"
+
+IMPLEMENTATION STRATEGY (IMPORTANT)
+- DO NOT replace the whole chat page. Only swap the composer area behind the flag.
+- Find the existing chat input/composer component (search for textarea/input placeholder like “Message”, “Send”, “Enter to send”, or button with icon “send”).
+- Wrap the existing composer render in a flag check:
+    if (!SUPREME_VOICE_UI) render existing composer unchanged
+    else render the new SupremeComposer and call the existing send handler
+
+FILE CHANGES (ADD + MINIMAL MODIFY)
+A) ADD: src/components/SupremeComposer.tsx  (or the closest existing components folder)
+B) ADD: src/styles/supreme-composer.css     (or existing styles folder)
+C) MODIFY: the file that renders the current chat composer (ChatInput/Composer/ChatFooter/etc.)
+D) MODIFY: the main CSS import entry to include supreme-composer.css ONCE (App.tsx/main.tsx/layout)
+
+IF THE PROJECT IS NEXT.JS:
+- CSS import should go into app/layout.tsx or pages/_app.tsx
+IF VITE/REACT:
+- CSS import should go into src/main.tsx or src/App.tsx
+
+ENV FLAG READ
+- Use the project’s current env method:
+  - Vite: import.meta.env.VITE_SUPREME_VOICE_UI
+  - Next: process.env.NEXT_PUBLIC_SUPREME_VOICE_UI
+  - Node/CRA: process.env.REACT_APP_SUPREME_VOICE_UI
+If uncertain, implement a small helper that checks all 3 safely.
+
+✅ STEP 1 — ADD SupremeComposer component (modern UI + browser STT/TTS)
+Create file: src/components/SupremeComposer.tsx
+Paste exactly:
+
+---8<--- FILE: src/components/SupremeComposer.tsx ---8<---
+import React, { useEffect, useMemo, useRef, useState } from "react";
+
+type Props = {
+  disabled?: boolean;
+  placeholder?: string;
+  onSend: (text: string) => Promise<void> | void;
+  autoSpeakText?: string;
+  defaultTtsEnabled?: boolean;
+  defaultMicMode?: "toggle" | "push";
+};
+
+declare global {
+  interface Window {
+    webkitSpeechRecognition?: any;
+    SpeechRecognition?: any;
+  }
+}
+
+export default function SupremeComposer({
+  disabled = false,
+  placeholder = "Message Supreme Assistant…",
+  onSend,
+  autoSpeakText,
+  defaultTtsEnabled = false,
+  defaultMicMode = "toggle",
+}: Props) {
+  const [value, setValue] = useState("");
+  const [isListening, setIsListening] = useState(false);
+  const [ttsEnabled, setTtsEnabled] = useState(defaultTtsEnabled);
+  const [micMode, setMicMode] = useState<"toggle" | "push">(defaultMicMode);
+  const [lastSpokenHash, setLastSpokenHash] = useState<string>("");
+
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const recognitionRef = useRef<any | null>(null);
+
+  const sttSupported = useMemo(
+    () => Boolean(window.SpeechRecognition || window.webkitSpeechRecognition),
+    []
+  );
+
+  const ttsSupported = useMemo(
+    () => typeof window !== "undefined" && "speechSynthesis" in window && "SpeechSynthesisUtterance" in window,
+    []
+  );
+
+  // Auto-grow textarea
+  useEffect(() => {
+    const el = textareaRef.current;
+    if (!el) return;
+    el.style.height = "0px";
+    const next = Math.min(el.scrollHeight, 180);
+    el.style.height = `${next}px`;
+  }, [value]);
+
+  // Setup STT
+  useEffect(() => {
+    if (!sttSupported) return;
+
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const rec = new SR();
+    rec.continuous = false;
+    rec.interimResults = true;
+    rec.lang = "en-US";
+
+    let finalTranscript = "";
+
+    rec.onstart = () => {
+      finalTranscript = "";
+      setIsListening(true);
+    };
+
+    rec.onerror = (e: any) => {
+      setIsListening(false);
+      console.warn("[SupremeComposer] STT error:", e?.error || e);
+    };
+
+    rec.onend = () => {
+      setIsListening(false);
+      if (finalTranscript.trim()) {
+        setValue((prev) => {
+          const merged = (prev ? prev + " " : "") + finalTranscript.trim();
+          return merged.replace(/\s+/g, " ").trim();
+        });
+      }
+    };
+
+    rec.onresult = (event: any) => {
+      let interim = "";
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const res = event.results[i];
+        const txt = res[0]?.transcript ?? "";
+        if (res.isFinal) finalTranscript += txt;
+        else interim += txt;
+      }
+      const preview = (finalTranscript + interim).trim();
+      if (preview) setValue(preview);
+    };
+
+    recognitionRef.current = rec;
+
+    return () => {
+      try { rec.stop(); } catch {}
+      recognitionRef.current = null;
+    };
+  }, [sttSupported]);
+
+  // TTS
+  function stopSpeaking() {
+    if (!ttsSupported) return;
+    window.speechSynthesis.cancel();
+  }
+
+  function speak(text: string) {
+    if (!ttsSupported || !text?.trim()) return;
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.rate = 1;
+    u.pitch = 1;
+    u.volume = 1;
+    window.speechSynthesis.speak(u);
+  }
+
+  // Auto-speak newest assistant message
+  useEffect(() => {
+    if (!ttsEnabled) return;
+    if (!autoSpeakText?.trim()) return;
+
+    const hash =
+      String(autoSpeakText.length) +
+      ":" +
+      autoSpeakText.slice(0, 40) +
+      ":" +
+      autoSpeakText.slice(-40);
+
+    if (hash === lastSpokenHash) return;
+
+    speak(autoSpeakText);
+    setLastSpokenHash(hash);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoSpeakText, ttsEnabled]);
+
+  // Mic controls
+  function startListening() {
+    if (!sttSupported || disabled) return;
+    try { recognitionRef.current?.start(); } catch {}
+  }
+  function stopListening() {
+    try { recognitionRef.current?.stop(); } catch {}
+  }
+  function toggleListening() {
+    if (!sttSupported || disabled) return;
+    if (isListening) stopListening();
+    else startListening();
+  }
+
+  // Send
+  async function doSend() {
+    const text = value.trim();
+    if (!text || disabled) return;
+    setValue("");
+    stopListening();
+    await onSend(text);
+    requestAnimationFrame(() => textareaRef.current?.focus());
+  }
+
+  function onKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      void doSend();
+    }
+  }
+
+  function toggleTts() {
+    const next = !ttsEnabled;
+    setTtsEnabled(next);
+    if (!next) stopSpeaking();
+  }
+
+  return (
+    <div className="supreme-composer-wrap">
+      <div className="supreme-composer">
+        <textarea
+          ref={textareaRef}
+          className="supreme-input"
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          onKeyDown={onKeyDown}
+          placeholder={placeholder}
+          disabled={disabled}
+          rows={1}
+        />
+
+        <div className="supreme-actions">
+          <button
+            type="button"
+            className={[
+              "supreme-iconbtn",
+              "mic",
+              isListening ? "active" : "",
+              !sttSupported ? "disabled" : "",
+            ].join(" ")}
+            title={!sttSupported ? "Voice input not supported in this browser" : isListening ? "Stop listening" : "Voice input"}
+            disabled={disabled || !sttSupported}
+            onClick={micMode === "toggle" ? toggleListening : undefined}
+            onMouseDown={micMode === "push" ? startListening : undefined}
+            onMouseUp={micMode === "push" ? stopListening : undefined}
+            onTouchStart={micMode === "push" ? startListening : undefined}
+            onTouchEnd={micMode === "push" ? stopListening : undefined}
+          >
+            <span className="icon mic" aria-hidden="true" />
+            {isListening && <span className="pulse" aria-hidden="true" />}
+          </button>
+
+          <button
+            type="button"
+            className={[
+              "supreme-iconbtn",
+              "speaker",
+              ttsEnabled ? "active" : "",
+              !ttsSupported ? "disabled" : "",
+            ].join(" ")}
+            title={!ttsSupported ? "Text-to-speech not supported" : ttsEnabled ? "Disable voice replies" : "Enable voice replies"}
+            disabled={disabled || !ttsSupported}
+            onClick={toggleTts}
+          >
+            <span className="icon speaker" aria-hidden="true" />
+          </button>
+
+          <button
+            type="button"
+            className={["supreme-send", value.trim() ? "ready" : ""].join(" ")}
+            disabled={disabled || !value.trim()}
+            onClick={() => void doSend()}
+            title="Send"
+          >
+            <span className="icon send" aria-hidden="true" />
+          </button>
+        </div>
+      </div>
+
+      <div className="supreme-subrow">
+        <button
+          type="button"
+          className="supreme-link"
+          onClick={() => setMicMode((m) => (m === "toggle" ? "push" : "toggle"))}
+          title="Switch mic mode"
+        >
+          Mic: {micMode === "toggle" ? "Tap to talk" : "Hold to talk"}
+        </button>
+      </div>
+    </div>
+  );
+}
+---8<--- END FILE ---8<---
+
+✅ STEP 2 — ADD the modern ChatGPT/Grok-ish styling
+Create file: src/styles/supreme-composer.css
+Paste exactly:
+
+---8<--- FILE: src/styles/supreme-composer.css ---8<---
+:root {
+  --sup-bg: rgba(255, 255, 255, 0.04);
+  --sup-border: rgba(255, 255, 255, 0.10);
+  --sup-border-strong: rgba(255, 255, 255, 0.16);
+  --sup-text: rgba(255, 255, 255, 0.92);
+  --sup-muted: rgba(255, 255, 255, 0.60);
+  --sup-muted2: rgba(255, 255, 255, 0.40);
+}
+
+.supreme-composer-wrap {
+  position: sticky;
+  bottom: 0;
+  padding: 14px 14px 10px;
+  background: linear-gradient(to top, rgba(0,0,0,0.65), rgba(0,0,0,0));
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.supreme-composer {
+  max-width: 860px;
+  margin: 0 auto;
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  padding: 12px 12px;
+  border-radius: 18px;
+  background: var(--sup-bg);
+  border: 1px solid var(--sup-border);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.20);
+}
+
+.supreme-input {
+  flex: 1;
+  min-height: 24px;
+  max-height: 180px;
+  resize: none;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--sup-text);
+  font-size: 15px;
+  line-height: 1.4;
+  padding: 6px 4px;
+}
+
+.supreme-input::placeholder {
+  color: var(--sup-muted2);
+}
+
+.supreme-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-bottom: 2px;
+}
+
+.supreme-iconbtn {
+  position: relative;
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  background: transparent;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  transition: transform 140ms ease, background 140ms ease, border-color 140ms ease;
+}
+
+.supreme-iconbtn:hover {
+  background: rgba(255,255,255,0.06);
+  border-color: rgba(255,255,255,0.06);
+}
+
+.supreme-iconbtn:active {
+  transform: scale(0.98);
+}
+
+.supreme-iconbtn.disabled,
+.supreme-iconbtn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.supreme-iconbtn.active {
+  background: rgba(120, 180, 255, 0.10);
+  border-color: rgba(120, 180, 255, 0.20);
+  box-shadow: 0 0 0 6px rgba(120, 180, 255, 0.06);
+}
+
+.supreme-iconbtn .pulse {
+  position: absolute;
+  inset: -6px;
+  border-radius: 16px;
+  border: 1px solid rgba(120,180,255,0.35);
+  animation: sup-pulse 1.25s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes sup-pulse {
+  0% { opacity: 0.25; transform: scale(0.98); }
+  50% { opacity: 0.55; transform: scale(1.02); }
+  100% { opacity: 0.25; transform: scale(0.98); }
+}
+
+.supreme-send {
+  width: 40px;
+  height: 36px;
+  border-radius: 12px;
+  border: 1px solid var(--sup-border);
+  background: rgba(255,255,255,0.04);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  transition: transform 140ms ease, background 140ms ease, border-color 140ms ease;
+}
+
+.supreme-send:hover {
+  background: rgba(255,255,255,0.08);
+  border-color: var(--sup-border-strong);
+}
+
+.supreme-send:active {
+  transform: scale(0.98);
+}
+
+.supreme-send:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.supreme-send.ready {
+  border-color: rgba(120,180,255,0.35);
+  box-shadow: 0 0 0 6px rgba(120, 180, 255, 0.06);
+}
+
+.icon {
+  width: 18px;
+  height: 18px;
+  background: var(--sup-muted);
+  -webkit-mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-size: contain;
+  mask-repeat: no-repeat;
+  mask-position: center;
+}
+
+.supreme-iconbtn.active .icon,
+.supreme-send.ready .icon {
+  background: rgba(255,255,255,0.90);
+}
+
+.icon.mic {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 14a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v5a3 3 0 0 0 3 3Z'/%3E%3Cpath d='M19 11a7 7 0 0 1-14 0'/%3E%3Cpath d='M12 18v3'/%3E%3Cpath d='M8 21h8'/%3E%3C/svg%3E");
+          mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 14a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v5a3 3 0 0 0 3 3Z'/%3E%3Cpath d='M19 11a7 7 0 0 1-14 0'/%3E%3Cpath d='M12 18v3'/%3E%3Cpath d='M8 21h8'/%3E%3C/svg%3E");
+}
+
+.icon.speaker {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M11 5 6 9H2v6h4l5 4V5Z'/%3E%3Cpath d='M15.5 8.5a5 5 0 0 1 0 7'/%3E%3Cpath d='M19 5a9 9 0 0 1 0 14'/%3E%3C/svg%3E");
+          mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M11 5 6 9H2v6h4l5 4V5Z'/%3E%3Cpath d='M15.5 8.5a5 5 0 0 1 0 7'/%3E%3Cpath d='M19 5a9 9 0 0 1 0 14'/%3E%3C/svg%3E");
+}
+
+.icon.send {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 19V5'/%3E%3Cpath d='m5 12 7-7 7 7'/%3E%3C/svg%3E");
+          mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 19V5'/%3E%3Cpath d='m5 12 7-7 7 7'/%3E%3C/svg%3E");
+}
+
+.supreme-subrow {
+  max-width: 860px;
+  margin: 8px auto 0;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.supreme-link {
+  background: transparent;
+  border: none;
+  color: var(--sup-muted2);
+  font-size: 12px;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 10px;
+  transition: background 140ms ease, color 140ms ease;
+}
+
+.supreme-link:hover {
+  background: rgba(255,255,255,0.05);
+  color: var(--sup-muted);
+}
+---8<--- END FILE ---8<---
+
+✅ STEP 3 — Import the CSS ONCE
+Find the app entry and add:
+  import "./styles/supreme-composer.css";
+If the repo uses a different styles path, match it.
+
+✅ STEP 4 — Wire it into the EXISTING chat page WITHOUT breaking send logic
+Locate the existing composer render. Minimal change:
+- Keep the existing send handler function exactly as-is (whatever it’s called).
+- Replace ONLY the JSX composer area like:
+
+  const supremeVoiceEnabled = readFlag("SUPREME_VOICE_UI", false);
+
+  return (
+    <>
+      ...messages UI...
+      {supremeVoiceEnabled ? (
+        <SupremeComposer
+          disabled={isSendingOrWhateverExistingState}
+          onSend={(text) => existingSendHandler(text)}
+          autoSpeakText={supremeTtsEnabled ? lastAssistantText : ""}
+          defaultTtsEnabled={readFlag("SUPREME_TTS_DEFAULT", false)}
+          defaultMicMode={readString("SUPREME_MIC_MODE","toggle") as any}
+        />
+      ) : (
+        <ExistingComposerComponentOrExistingJSX />
+      )}
+    </>
+  );
+
+IMPORTANT: You must get lastAssistantText from the existing messages array without changing its structure.
+Example (adapt to repo):
+  const lastAssistantText = [...messages].reverse().find(m => m.role === "assistant")?.content ?? "";
+
+✅ STEP 5 — Add env flag helper (small, safe)
+If no env helper exists, add a tiny utility near the chat component (or in utils/env.ts):
+- checks process.env + import.meta.env
+- treats "1","true","yes","on" as true
+- default false
+
+✅ STEP 6 — Replit env defaults
+Add to .env.example (or README env section) WITHOUT enabling by default:
+SUPREME_VOICE_UI=0
+SUPREME_TTS_DEFAULT=0
+SUPREME_MIC_MODE=toggle
+
+✅ STEP 7 — Verify
+- With SUPREME_VOICE_UI=0: app looks EXACTLY the same as before (no UI changes)
+- With SUPREME_VOICE_UI=1: new modern composer shows; typing + Enter-to-send works
+- Shift+Enter inserts newline
+- Mic toggles listening (if supported); on HTTPS works
+- Speaker toggle reads last assistant reply aloud
+
+COMMITS
+1) feat(ui): add SupremeComposer (flagged) + env helpers
+2) style(ui): add supreme composer styling + integration wiring
+
+DELIVERABLE
+Push commits to the repo and ensure build passes.
+
+END.

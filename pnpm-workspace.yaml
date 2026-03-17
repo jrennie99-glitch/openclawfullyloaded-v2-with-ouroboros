@@ -3,6 +3,11 @@ packages:
   - ui
   - packages/*
   - extensions/*
+  - paperclip
+  - paperclip/server
+  - paperclip/ui
+  - paperclip/cli
+  - paperclip/packages/*
 
 onlyBuiltDependencies:
   - "@lydell/node-pty"
