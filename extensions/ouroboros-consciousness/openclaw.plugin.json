@@ -1,0 +1,7 @@
+{
+  "id": "ouroboros-consciousness",
+  "name": "Ouroboros Consciousness",
+  "description": "Background consciousness daemon for proactive thinking between tasks",
+  "version": "2026.2.6-3",
+  "configSchema": {}
+}

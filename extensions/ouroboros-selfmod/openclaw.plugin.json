@@ -1,0 +1,7 @@
+{
+  "id": "ouroboros-selfmod",
+  "name": "Ouroboros Self-Modification",
+  "description": "Self-modification with multi-model review gating",
+  "version": "2026.2.6-3",
+  "configSchema": {}
+}

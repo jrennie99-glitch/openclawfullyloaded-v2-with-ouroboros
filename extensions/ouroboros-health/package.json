@@ -1,0 +1,17 @@
+{
+  "name": "@openclaw/ouroboros-health",
+  "version": "2026.2.6-3",
+  "description": "Ouroboros budget tracking, health invariants, and drift detection",
+  "type": "module",
+  "dependencies": {
+    "@sinclair/typebox": "0.34.48"
+  },
+  "devDependencies": {
+    "openclaw": "workspace:*"
+  },
+  "openclaw": {
+    "extensions": [
+      "./index.ts"
+    ]
+  }
+}

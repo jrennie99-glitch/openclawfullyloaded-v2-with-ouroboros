@@ -1,0 +1,7 @@
+{
+  "id": "ouroboros-tasks",
+  "name": "Ouroboros Tasks",
+  "description": "Task decomposition with parent/child hierarchy and owner message injection",
+  "version": "2026.2.6-3",
+  "configSchema": {}
+}

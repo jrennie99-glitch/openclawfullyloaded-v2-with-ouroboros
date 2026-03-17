@@ -1,0 +1,7 @@
+{
+  "id": "ouroboros-identity",
+  "name": "Ouroboros Identity",
+  "description": "Constitutional framework and persistent identity management",
+  "version": "2026.2.6-3",
+  "configSchema": {}
+}

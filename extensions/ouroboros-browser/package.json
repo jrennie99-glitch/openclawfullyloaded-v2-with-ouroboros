@@ -1,0 +1,17 @@
+{
+  "name": "@openclaw/ouroboros-browser",
+  "version": "2026.2.6-3",
+  "description": "Enhanced browser automation with stealth mode and anti-detection",
+  "type": "module",
+  "dependencies": {
+    "@sinclair/typebox": "0.34.48"
+  },
+  "devDependencies": {
+    "openclaw": "workspace:*"
+  },
+  "openclaw": {
+    "extensions": [
+      "./index.ts"
+    ]
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "id": "ouroboros-knowledge",
+  "name": "Ouroboros Knowledge",
+  "description": "Persistent knowledge base with topic indexing and search",
+  "version": "2026.2.6-3",
+  "configSchema": {}
+}

@@ -1,0 +1,7 @@
+{
+  "id": "ouroboros-compaction",
+  "name": "Ouroboros Compaction",
+  "description": "LLM-driven intelligent context compaction preserving identity and constitution",
+  "version": "2026.2.6-3",
+  "configSchema": {}
+}

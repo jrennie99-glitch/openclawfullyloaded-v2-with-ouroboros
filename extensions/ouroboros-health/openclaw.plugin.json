@@ -1,0 +1,7 @@
+{
+  "id": "ouroboros-health",
+  "name": "Ouroboros Health",
+  "description": "Budget tracking, health invariants, and drift detection",
+  "version": "2026.2.6-3",
+  "configSchema": {}
+}

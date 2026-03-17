@@ -1,0 +1,17 @@
+{
+  "name": "@openclaw/ouroboros-knowledge",
+  "version": "2026.2.6-3",
+  "description": "Persistent knowledge base with topic indexing and semantic retrieval",
+  "type": "module",
+  "dependencies": {
+    "@sinclair/typebox": "0.34.48"
+  },
+  "devDependencies": {
+    "openclaw": "workspace:*"
+  },
+  "openclaw": {
+    "extensions": [
+      "./index.ts"
+    ]
+  }
+}
