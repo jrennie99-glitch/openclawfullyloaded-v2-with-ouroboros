@@ -5,7 +5,8 @@
       "mode": "token"
     },
     "controlUi": {
-      "allowInsecureAuth": true
+      "allowInsecureAuth": true,
+      "dangerouslyAllowHostHeaderOriginFallback": true
     }
   },
   "messages": {
@@ -41,22 +42,6 @@
             "reasoning": false,
             "input": ["text"],
             "contextWindow": 32768,
-            "maxTokens": 8192
-          },
-          {
-            "id": "deepseek-r1:8b",
-            "name": "DeepSeek R1 8B (Local - Reasoning)",
-            "reasoning": true,
-            "input": ["text"],
-            "contextWindow": 65536,
-            "maxTokens": 8192
-          },
-          {
-            "id": "gemma3:12b",
-            "name": "Gemma 3 12B (Local - Creative)",
-            "reasoning": false,
-            "input": ["text"],
-            "contextWindow": 128000,
             "maxTokens": 8192
           },
           {
@@ -236,7 +221,7 @@
         "id": "analyst",
         "name": "Data Analyst",
         "model": {
-          "primary": "ollama/deepseek-r1:8b",
+          "primary": "ollama/phi4:latest",
           "fallbacks": [
             "openrouter/deepseek/deepseek-chat-v3-0324:free",
             "ollama/qwen3.5:latest"
@@ -251,10 +236,10 @@
         "id": "writer",
         "name": "Content Writer",
         "model": {
-          "primary": "ollama/gemma3:12b",
+          "primary": "ollama/qwen3.5:latest",
           "fallbacks": [
             "openrouter/google/gemma-3-27b-it:free",
-            "ollama/qwen3.5:latest"
+            "ollama/llama3.1:8b"
           ]
         },
         "tools": {
@@ -266,10 +251,10 @@
         "id": "reasoner",
         "name": "Deep Reasoner",
         "model": {
-          "primary": "ollama/deepseek-r1:8b",
+          "primary": "ollama/phi4:latest",
           "fallbacks": [
             "openrouter/deepseek/deepseek-chat-v3-0324:free",
-            "ollama/phi4:latest"
+            "ollama/qwen3.5:latest"
           ]
         },
         "tools": {
