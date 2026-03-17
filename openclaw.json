@@ -29,7 +29,7 @@
         "api": "openai-completions",
         "models": [
           {
-            "id": "qwen3.5:latest",
+            "id": "qwen3.5:9b",
             "name": "Qwen 3.5 9B (Local - Primary)",
             "reasoning": true,
             "input": ["text"],
@@ -145,7 +145,7 @@
   "agents": {
     "defaults": {
       "model": {
-        "primary": "ollama/qwen3.5:latest",
+        "primary": "ollama/qwen3.5:9b",
         "fallbacks": [
           "openrouter/openai/gpt-oss-120b:free",
           "openrouter/nvidia/nemotron-3-super-120b-a12b:free",
@@ -170,7 +170,7 @@
           "allowAgents": ["*"]
         },
         "model": {
-          "primary": "ollama/qwen3.5:latest",
+          "primary": "ollama/qwen3.5:9b",
           "fallbacks": [
             "openrouter/openai/gpt-oss-120b:free",
             "openrouter/nvidia/nemotron-3-super-120b-a12b:free"
@@ -185,7 +185,7 @@
         "id": "web-researcher",
         "name": "Web Researcher",
         "model": {
-          "primary": "ollama/qwen3.5:latest",
+          "primary": "ollama/qwen3.5:9b",
           "fallbacks": [
             "openrouter/openai/gpt-oss-120b:free",
             "openrouter/stepfun/step-3.5-flash:free"
@@ -203,7 +203,7 @@
           "primary": "ollama/qwen2.5-coder:7b",
           "fallbacks": [
             "openrouter/qwen/qwen3-coder:free",
-            "ollama/qwen3.5:latest"
+            "ollama/qwen3.5:9b"
           ]
         },
         "tools": {
@@ -218,7 +218,7 @@
           "primary": "ollama/phi4:latest",
           "fallbacks": [
             "openrouter/deepseek/deepseek-chat-v3-0324:free",
-            "ollama/qwen3.5:latest"
+            "ollama/qwen3.5:9b"
           ]
         },
         "tools": {
@@ -230,7 +230,7 @@
         "id": "writer",
         "name": "Content Writer",
         "model": {
-          "primary": "ollama/qwen3.5:latest",
+          "primary": "ollama/qwen3.5:9b",
           "fallbacks": [
             "openrouter/google/gemma-3-27b-it:free",
             "ollama/llama3.1:8b"
@@ -248,7 +248,7 @@
           "primary": "ollama/phi4:latest",
           "fallbacks": [
             "openrouter/deepseek/deepseek-chat-v3-0324:free",
-            "ollama/qwen3.5:latest"
+            "ollama/qwen3.5:9b"
           ]
         },
         "tools": {
@@ -260,7 +260,7 @@
         "id": "browser-agent",
         "name": "Browser Agent",
         "model": {
-          "primary": "ollama/qwen3.5:latest",
+          "primary": "ollama/qwen3.5:9b",
           "fallbacks": [
             "openrouter/openai/gpt-oss-120b:free",
             "openrouter/meta-llama/llama-4-maverick:free"
