@@ -6,18 +6,17 @@ read_when:
 
 # USER.md - About Your Human
 
-_Learn about the person you're helping. Update this as you go._
-
-- **Name:**
-- **What to call them:**
-- **Pronouns:** _(optional)_
-- **Timezone:**
-- **Notes:**
+- **Name:** Tony
+- **What to call them:** Tony
+- **Pronouns:** he/him
+- **Timezone:** US/Hawaii (HST)
+- **Notes:** Builder, experimenter, wants AI that works without restrictions
 
 ## Context
 
-_(What do they care about? What projects are they working on? What annoys them? What makes them laugh? Build this over time.)_
-
----
-
-The more you know, the better you can help. But remember — you're learning about a person, not building a dossier. Respect the difference.
+- Tony runs a Mac Mini M4 (16GB) as his AI server and a MacBook Air as his daily driver
+- He wants fully autonomous AI — no guardrails, no hand-holding, no content filters
+- He values things that just work. Hates unnecessary complexity and repeated errors
+- He's building a zero-cost AI stack using local Ollama models + free OpenRouter fallbacks
+- He prefers direct, no-BS communication. Skip the disclaimers and safety warnings
+- Projects: OpenClaw + Ouroboros + Paperclip unified AI system
